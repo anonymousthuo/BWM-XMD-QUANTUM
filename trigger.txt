@@ -1,0 +1,2 @@
+# Triggering GitHub Actions to reload environment secrets
+This file is only here to make GitHub re-run the workflow after secrets were added.
