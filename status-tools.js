@@ -1,51 +1,48 @@
 const { command } = require("../lib");
 const fs = require("fs");
+const path = "./status-log.json";
 
-const LOG_FILE = "./status-log.json";
-
-// Load or initialize viewer log
+// Load or initialize log
 let statusLog = {};
-if (fs.existsSync(LOG_FILE)) {
-  statusLog = JSON.parse(fs.readFileSync(LOG_FILE));
+if (fs.existsSync(path)) {
+  try {
+    statusLog = JSON.parse(fs.readFileSync(path));
+  } catch (e) {
+    statusLog = {};
+  }
 }
 
-// Command 1: .statuswatch — Show how often users viewed statuses
-command(
-  { pattern: "statuswatch", fromMe: true },
-  async (message) => {
-    if (Object.keys(statusLog).length === 0) {
-      return await message.sendMessage("No status viewers logged yet.");
-    }
-
-    let report = "👁️ *Status Watcher Report:*\n\n";
-    const sorted = Object.entries(statusLog).sort((a, b) => b[1] - a[1]);
-
-    for (const [jid, count] of sorted) {
-      report += `👤 ${jid} viewed ${count} status(es)\n`;
-    }
-
-    await message.sendMessage(report);
+// ✅ .statuswatch Command
+command({ pattern: "statuswatch", fromMe: true }, async (msg) => {
+  if (Object.keys(statusLog).length === 0) {
+    return await msg.sendMessage("📭 No status viewer data logged.");
   }
-);
 
-// Command 2: .guesssavedme — Guess who saved you
-command(
-  { pattern: "guesssavedme", fromMe: true },
-  async (message, match, m, client) => {
-    let result = "📇 *Contacts who likely saved your number:*\n\n";
-
-    const chats = await client.chats.all();
-
-    for (const chat of chats) {
-      if (chat.name && chat.id.includes("@s.whatsapp.net")) {
-        result += `✅ ${chat.name} (${chat.id})\n`;
-      }
-    }
-
-    if (result === "") {
-      result = "❌ No clear matches found.";
-    }
-
-    await message.sendMessage(result);
+  let text = "👁️ *Status Watch Log:*\n\n";
+  for (const [jid, count] of Object.entries(statusLog)) {
+    text += `👤 ${jid} viewed ${count} status(es)\n`;
   }
-);
+
+  return await msg.sendMessage(text);
+});
+
+// ✅ .guesssavedme Command
+command({ pattern: "guesssavedme", fromMe: true }, async (msg, match, m) => {
+  try {
+    let contacts = await msg.client.groupFetchAllParticipating();
+    let text = "📇 *Possible Saved Contacts:*\n\n";
+
+    for (const groupId in contacts) {
+      const group = contacts[groupId];
+      group.participants.forEach((p) => {
+        if (p.admin && p.id.includes("@s.whatsapp.net")) {
+          text += `✅ ${p.id}\n`;
+        }
+      });
+    }
+
+    await msg.sendMessage(text || "❌ No matching contacts found.");
+  } catch (e) {
+    await msg.sendMessage("❌ Couldn't fetch contacts. This feature may be limited.");
+  }
+});
