@@ -41,7 +41,6 @@ if (fs.existsSync(path)) {
 }
 
 // When a message is a status view
-bot.ev.on('status-viewed', async (user) => {
   const jid = user.id;
   if (!statusLog[jid]) {
     statusLog[jid] = 1;
