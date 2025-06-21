@@ -1,48 +1,30 @@
 const { command } = require("../lib");
-const fs = require("fs");
-const path = "./status-log.json";
 
-// Load or initialize log
-let statusLog = {};
-if (fs.existsSync(path)) {
-  try {
-    statusLog = JSON.parse(fs.readFileSync(path));
-  } catch (e) {
-    statusLog = {};
-  }
-}
+// .guesssavedme command
+command(
+  { pattern: "guesssavedme", fromMe: true },
+  async (message, match, m, client) => {
+    const chats = await client.chats.all();
+    let result = "📇 *People who likely saved your number:*\n\n";
 
-// ✅ .statuswatch Command
-command({ pattern: "statuswatch", fromMe: true }, async (msg) => {
-  if (Object.keys(statusLog).length === 0) {
-    return await msg.sendMessage("📭 No status viewer data logged.");
-  }
-
-  let text = "👁️ *Status Watch Log:*\n\n";
-  for (const [jid, count] of Object.entries(statusLog)) {
-    text += `👤 ${jid} viewed ${count} status(es)\n`;
-  }
-
-  return await msg.sendMessage(text);
-});
-
-// ✅ .guesssavedme Command
-command({ pattern: "guesssavedme", fromMe: true }, async (msg, match, m) => {
-  try {
-    let contacts = await msg.client.groupFetchAllParticipating();
-    let text = "📇 *Possible Saved Contacts:*\n\n";
-
-    for (const groupId in contacts) {
-      const group = contacts[groupId];
-      group.participants.forEach((p) => {
-        if (p.admin && p.id.includes("@s.whatsapp.net")) {
-          text += `✅ ${p.id}\n`;
-        }
-      });
+    for (const chat of chats) {
+      const { id, name } = chat;
+      if (name && id.includes("@s.whatsapp.net")) {
+        result += `✅ ${name} (${id})\n`;
+      }
     }
 
-    await msg.sendMessage(text || "❌ No matching contacts found.");
-  } catch (e) {
-    await msg.sendMessage("❌ Couldn't fetch contacts. This feature may be limited.");
+    await message.sendMessage(result || "❌ No contacts found.");
   }
-});
+);
+
+// .typetest fake typing demo
+command(
+  { pattern: "typetest", fromMe: true },
+  async (message, match, m, client) => {
+    await client.sendPresenceUpdate("composing", message.jid);
+    await new Promise((res) => setTimeout(res, 3000));
+    await client.sendPresenceUpdate("paused", message.jid);
+    await message.sendMessage("✅ This was a fake typing effect.");
+  }
+);
