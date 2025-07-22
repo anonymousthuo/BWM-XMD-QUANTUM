@@ -1,8 +1,6 @@
 name: BWM-XMD Deploy
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -10,19 +8,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-      - name: 🔧 Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20.19.2 # Matches your package.json engine
+          node-version: '20.x'
 
-      - name: 🧹 Clear npm cache
-        run: npm cache clean --force
-
-      - name: 📥 Install dependencies
+      - name: Install Dependencies
         run: npm install
 
-      - name: 🚀 Start bot
-        run: npm start
+      - name: Run Bot (Test)
+        run: node index.js
