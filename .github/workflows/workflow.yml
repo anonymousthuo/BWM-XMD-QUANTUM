@@ -1,26 +1,28 @@
-name: BWM-XMD Bot CI
+name: BWM-XMD Deploy
 
 on:
   push:
-    branches: [main] # or "master" if your repo uses that
-  pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⬇️ Checkout repository
+      - name: 📦 Checkout code
         uses: actions/checkout@v3
 
-      - name: 🔧 Setup Node.js
+      - name: 🔧 Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'  # Use the version your bot needs
+          node-version: 20.19.2 # Matches your package.json engine
 
-      - name: 📦 Install dependencies
+      - name: 🧹 Clear npm cache
+        run: npm cache clean --force
+
+      - name: 📥 Install dependencies
         run: npm install
 
-      - name: ▶️ Start Bot
+      - name: 🚀 Start bot
         run: npm start
