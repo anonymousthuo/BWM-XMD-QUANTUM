@@ -1,30 +1,26 @@
-name: Node.js CI
+name: BWM-XMD Bot CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main] # or "master" if your repo uses that
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [16.x]
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: ⬇️ Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: 🔧 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Use the version your bot needs
 
-    - name: Install dependencies
-      run: npm install
+      - name: 📦 Install dependencies
+        run: npm install
 
-    - name: Run bot
-      run: node index.js
+      - name: ▶️ Start Bot
+        run: npm start
