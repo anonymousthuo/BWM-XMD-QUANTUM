@@ -1,11 +1,23 @@
-name: Test Minimal Action
+name: BWM-XMD Deployment
 
 on:
   workflow_dispatch:
 
 jobs:
-  hello:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Print Hello
-        run: echo "👋 Hello from GitHub Actions!"
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+
+    - name: Use Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Start Bot
+      run: node .
