@@ -1,4 +1,6 @@
-name: BWM XMD Quantum Workflow
+name: Clone BWM-XMD (private repo)
+  run: |
+    git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/AnonymousThuo/bwm-xmd.git
 
 on:
   push:
