@@ -1,4 +1,4 @@
-name: Clone BWM-XMD (private repo)
+-name: Clone BWM-XMD (private repo)
   run: |
     git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/AnonymousThuo/bwm-xmd.git
 
