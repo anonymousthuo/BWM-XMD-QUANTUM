@@ -32,3 +32,23 @@ async function fetchBODYUrl() {
 }
 
 fetchBODYUrl();
+const { default: makeWASocket } = require('@whiskeysockets/baileys');
+
+async function startBot() {
+  const sock = makeWASocket({
+    printQRInTerminal: true,
+    logger: console, // Enable detailed logs
+  });
+
+  sock.ev.on('connection.update', (update) => {
+    console.log('Connection Update:', update);
+    if (update.qr) console.log('New QR Code Generated!');
+    if (update.connection === 'open') console.log('Bot is connected!');
+  });
+
+  sock.ev.on('messages.upsert', (m) => {
+    console.log('Received message:', m);
+  });
+}
+
+startBot().catch(console.error);
