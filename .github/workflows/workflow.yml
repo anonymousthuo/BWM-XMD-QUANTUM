@@ -1,41 +1,30 @@
-name: BWM-XMD Quantum CI Pipeline
+name: Node.js CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
       with:
-        submodules: recursive
+        node-version: ${{ matrix.node-version }}
 
-    - name: Setup CUDA Quantum
-      uses: cuda-actions/setup-cuda@v1
-      with:
-        cuda-version: '12.5.0'
+    - name: Install dependencies
+      run: npm install
 
-    - name: Install Python dependencies
-      run: |
-        python3 -m pip install --upgrade pip
-        pip3 install cuda-quantum pytest numpy
-
-    - name: Build C++ components
-      run: |
-        mkdir build && cd build
-        cmake ..
-        make -j$(nproc)
-
-    - name: Run quantum-classical tests
-      run: |
-        cd tests
-        python3 -m pytest quantum_integration.py --verbose
-
-    - name: Performance validation
-      run: |
-        ./build/quantum_benchmark --iterations=100
+    - name: Run bot
+      run: node index.js 
