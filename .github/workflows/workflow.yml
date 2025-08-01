@@ -1,23 +1,41 @@
-name: BWM-XMD Deployment
+name: BWM XMD Quantum Workflow
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  build:
+  run-quantum-calc:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repo
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Use Node.js 20
-      uses: actions/setup-node@v4
+    - name: Set up Python (if needed for scripting)
+      uses: actions/setup-python@v5
       with:
-        node-version: 20
+        python-version: '3.11'
 
-    - name: Install Dependencies
-      run: npm install
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential gfortran liblapack-dev libblas-dev
+        # Add installation steps for XMD and BWM here
+        # Example placeholder:
+        git clone https://github.com/example/bwm-xmd.git
+        cd bwm-xmd && make && sudo make install
 
-    - name: Start Bot
-      run: node .
+    - name: Run BWM XMD calculation
+      run: |
+        # Assume your input file is input.xmd or similar
+        bwm-xmd ./inputs/input.xmd > output.log
+
+    - name: Upload results
+      uses: actions/upload-artifact@v4
+      with:
+        name: quantum-results
+        path: |
+          output.log
+          results/
